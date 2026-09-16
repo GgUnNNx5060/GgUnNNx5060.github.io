@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Patcharapol Chimmanee — 3D Portfolio</title>
+
+  <style>
+    :root{
+      --cream:#f4ead5;
+      --paper:#fffaf0;
+      --brown:#4b3527;
+      --green:#58734a;
+      --green2:#78945e;
+      --gold:#d6a84f;
+      --shadow:rgba(45,30,18,.22);
+    }
+
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%;margin:0;overflow:hidden}
+    body{
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color:var(--brown);
+      background:#20261d;
+      cursor:none;
+    }
+
+    #app{position:fixed;inset:0}
+    canvas{display:block}
+
+    /* Lobby UI */
+    .topbar{
+      position:fixed;
+      top:0;left:0;right:0;
+      z-index:10;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:24px 34px;
+      pointer-events:none;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      color:#fff;
+      text-shadow:0 2px 12px rgba(0,0,0,.45);
+      letter-spacing:.08em;
+      font-size:13px;
+      font-weight:800;
+      text-transform:uppercase;
+    }
+
+    .brand-dot{
+      width:11px;height:11px;border-radius:50%;
+      background:#d8bd72;
+      box-shadow:0 0 18px #d8bd72;
+    }
+
+    .badge{
+      color:#fff;
+      background:rgba(37,45,32,.62);
+      border:1px solid rgba(255,255,255,.18);
+      backdrop-filter:blur(12px);
+      padding:9px 14px;
+      border-radius:999px;
+      font-size:11px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+    }
+
+    .profile{
+      position:fixed;
+      z-index:10;
+      left:38px;
+      bottom:38px;
+      width:min(410px, calc(100vw - 76px));
+      padding:25px 27px;
+      border-radius:20px;
+      background:rgba(255,250,240,.90);
+      border:1px solid rgba(255,255,255,.7);
+      box-shadow:0 18px 60px var(--shadow);
+      backdrop-filter:blur(18px);
+    }
+
+    .eyebrow{
+      display:flex;align-items:center;gap:9px;
+      font-size:10px;font-weight:800;
+      letter-spacing:.2em;text-transform:uppercase;
+      color:var(--green);
+      margin-bottom:9px;
+    }
+    .eyebrow::before{
+      content:"";
+      width:25px;height:2px;background:var(--gold);
+    }
+
+    h1{
+      margin:0;
+      font-size:clamp(28px,3vw,43px);
+      line-height:1;
+      letter-spacing:-.04em;
+    }
+
+    .role{
+      margin:9px 0 18px;
+      font-size:13px;
+      color:#806d5d;
+      font-weight:600;
+    }
+
+    .details{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:9px;
+      padding-top:16px;
+      border-top:1px solid rgba(75,53,39,.15);
+    }
+
+    .detail span{
+      display:block;
+      font-size:9px;
+      text-transform:uppercase;
+      letter-spacing:.13em;
+      color:#a18c77;
+      margin-bottom:3px;
+      font-weight:800;
+    }
+    .detail strong{font-size:13px}
+
+    .hint{
+      position:fixed;
+      z-index:10;
+      right:35px;
+      bottom:38px;
+      color:#fff;
+      text-align:right;
+      text-shadow:0 2px 10px rgba(0,0,0,.55);
+      pointer-events:none;
+    }
+    .hint strong{
+      display:block;
+      font-size:13px;
+      letter-spacing:.05em;
+    }
+    .hint span{
+      display:block;
+      margin-top:4px;
+      opacity:.72;
+      font-size:10px;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+    }
+
+    /* Custom cursor */
+    #cursor{
+      position:fixed;
+      z-index:100;
+      width:28px;height:28px;
+      border:2px solid rgba(255,255,255,.95);
+      border-radius:50%;
+      transform:translate(-50%,-50%);
+      pointer-events:none;
+      mix-blend-mode:difference;
+      transition:width .12s,height .12s,background .12s,border .12s;
+    }
+    #cursor::after{
+      content:"";
+      position:absolute;
+      width:5px;height:5px;
+      left:50%;top:50%;
+      transform:translate(-50%,-50%);
+      background:#fff;border-radius:50%;
+    }
+    body.pointer #cursor{
+      width:42px;height:42px;
+      background:rgba(255,255,255,.10);
+    }
+
+    /* Feeding effect */
+    .feed{
+      position:fixed;
+      z-index:50;
+      pointer-events:none;
+      width:12px;height:12px;
+      border-radius:50%;
+      background:#d6a84f;
+      box-shadow:0 0 18px #f4d38a;
+      transform:translate(-50%,-50%);
+      animation:feed .8s ease-out forwards;
+    }
+    @keyframes feed{
+      0%{opacity:1;transform:translate(-50%,-50%) scale(.4)}
+      55%{opacity:1;transform:translate(-50%,-85px) scale(1)}
+      100%{opacity:0;transform:translate(-50%,-115px) scale(.05)}
+    }
+
+    #loading{
+      position:fixed;inset:0;z-index:200;
+      display:grid;place-items:center;
+      background:#1e251c;color:#fff;
+      transition:opacity .7s ease;
+    }
+    #loading.hide{opacity:0;pointer-events:none}
+    .loader{text-align:center}
+    .loader-ring{
+      width:52px;height:52px;border-radius:50%;
+      border:2px solid rgba(255,255,255,.18);
+      border-top-color:#d6a84f;
+      animation:spin 1s linear infinite;
+      margin:0 auto 18px;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loader p{
+      margin:0;
+      font-size:10px;
+      letter-spacing:.2em;
+      text-transform:uppercase;
+      opacity:.7;
+    }
+
+    @media(max-width:700px){
+      .topbar{padding:18px}
+      .profile{left:18px;bottom:18px;padding:20px;width:calc(100vw - 36px)}
+      .hint{right:18px;bottom:18px;display:none}
+      .brand{font-size:10px}
+      .badge{font-size:9px;padding:7px 10px}
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app"></div>
+  <div id="cursor"></div>
+
+  <div id="loading">
+    <div class="loader">
+      <div class="loader-ring"></div>
+      <p>Preparing the lobby...</p>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand"><i class="brand-dot"></i> 3D PORTFOLIO</div>
+    <div class="badge">Environment · 3D · Game & Animation</div>
+  </header>
+
+  <section class="profile">
+    <div class="eyebrow">Player Profile</div>
+    <h1>Patcharapol<br>Chimmanee</h1>
+    <div class="role">Nickname : Gun · Digital Media Design</div>
+
+    <div class="details">
+      <div class="detail">
+        <span>Age</span>
+        <strong>21 Y</strong>
+      </div>
+      <div class="detail">
+        <span>Birthday</span>
+        <strong>05 / 07 / 05</strong>
+      </div>
+      <div class="detail">
+        <span>Focus</span>
+        <strong>3D / Environment</strong>
+      </div>
+      <div class="detail">
+        <span>Interaction</span>
+        <strong>Drag · Rotate · Feed</strong>
+      </div>
+    </div>
+  </section>
+
+  <div class="hint">
+    <strong>Drag to explore the 3D model</strong>
+    <span>Click anywhere to feed the animal</span>
+  </div>
+
+  <!--
+    Put your GLB model beside this index.html and name it:
+      character.glb
+
+    Or change MODEL_URL below to your own .glb path.
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+    const MODEL_URL = "./character.glb";
+
+    const app = document.getElementById("app");
+    const loading = document.getElementById("loading");
+    const cursor = document.getElementById("cursor");
+
+    // ------------------------------------------------------------
+    // Scene
+    // ------------------------------------------------------------
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x252b21);
+    scene.fog = new THREE.FogExp2(0x252b21, 0.035);
+
+    const camera = new THREE.PerspectiveCamera(
+      42,
+      innerWidth / innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(3.8, 2.1, 6.2);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    app.appendChild(renderer.domElement);
+
+    // ------------------------------------------------------------
+    // PBR environment
+    // ------------------------------------------------------------
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const envScene = new RoomEnvironment(renderer);
+    scene.environment = pmrem.fromScene(envScene, 0.04).texture;
+    envScene.dispose();
+    pmrem.dispose();
+
+    // ------------------------------------------------------------
+    // Planet Zoo-inspired lobby
+    // ------------------------------------------------------------
+    const lobby = new THREE.Group();
+    scene.add(lobby);
+
+    // Floor
+    const floorMat = new THREE.MeshStandardMaterial({
+      color: 0x6e604d,
+      roughness: 0.86,
+      metalness: 0.02
+    });
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(14, 64),
+      floorMat
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    lobby.add(floor);
+
+    // Wood circular display platform
+    const platform = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.15, 2.28, 0.28, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0x806a4e,
+        roughness: .72,
+        metalness: 0
+      })
+    );
+    platform.position.y = .14;
+    platform.castShadow = true;
+    platform.receiveShadow = true;
+    lobby.add(platform);
+
+    // Green trim around platform
+    const trim = new THREE.Mesh(
+      new THREE.TorusGeometry(2.18, .055, 12, 80),
+      new THREE.MeshStandardMaterial({
+        color: 0x788c55,
+        roughness: .55
+      })
+    );
+    trim.rotation.x = Math.PI / 2;
+    trim.position.y = .3;
+    lobby.add(trim);
+
+    // Back wall
+    const wallMat = new THREE.MeshStandardMaterial({
+      color: 0x777b63,
+      roughness: .92
+    });
+    const backWall = new THREE.Mesh(
+      new THREE.BoxGeometry(18, 8, .35),
+      wallMat
+    );
+    backWall.position.set(0, 4, -4.8);
+    backWall.receiveShadow = true;
+    lobby.add(backWall);
+
+    // Wooden beams
+    const beamMat = new THREE.MeshStandardMaterial({
+      color: 0x4d3929,
+      roughness: .78
+    });
+
+    function beam(x,y,z,sx,sy,sz){
+      const m = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), beamMat);
+      m.position.set(x,y,z);
+      m.scale.set(sx,sy,sz);
+      m.castShadow = true;
+      lobby.add(m);
+      return m;
+    }
+
+    beam(-5.8,3.1,-4.55,.28,6.2,.55);
+    beam(5.8,3.1,-4.55,.28,6.2,.55);
+    beam(0,6.1,-4.55,11.8,.3,.55);
+    beam(-2.8,4.4,-4.45,.18,3.8,.35);
+    beam(2.8,4.4,-4.45,.18,3.8,.35);
+
+    // Glass-like decorative panels
+    const glassMat = new THREE.MeshPhysicalMaterial({
+      color: 0x91a77a,
+      roughness: .25,
+      metalness: .0,
+      transmission: .12,
+      transparent: true,
+      opacity: .6
+    });
+
+    for(let i=-2;i<=2;i++){
+      const panel = new THREE.Mesh(
+        new THREE.BoxGeometry(2.15,2.7,.08),
+        glassMat
+      );
+      panel.position.set(i*2.5,2.75,-4.33);
+      lobby.add(panel);
+    }
+
+    // Warm wall lamps
+    function lamp(x,z){
+      const fixture = new THREE.Mesh(
+        new THREE.SphereGeometry(.14,20,20),
+        new THREE.MeshStandardMaterial({
+          color:0xffe5ad,
+          emissive:0xffb94e,
+          emissiveIntensity:2.4
+        })
+      );
+      fixture.position.set(x,3.75,z);
+      lobby.add(fixture);
+
+      const light = new THREE.PointLight(0xffc46b, 13, 5.5, 2);
+      light.position.copy(fixture.position);
+      lobby.add(light);
+    }
+    lamp(-4.3,-4.05);
+    lamp(0,-4.05);
+    lamp(4.3,-4.05);
+
+    // Plants
+    function makePlant(x,z,scale=1){
+      const g = new THREE.Group();
+      const pot = new THREE.Mesh(
+        new THREE.CylinderGeometry(.28,.34,.45,24),
+        new THREE.MeshStandardMaterial({color:0x70513a,roughness:.8})
+      );
+      pot.position.y=.225;
+      pot.castShadow=true;
+      g.add(pot);
+
+      const leafMat = new THREE.MeshStandardMaterial({
+        color:0x46633d,
+        roughness:.82
+      });
+
+      for(let i=0;i<7;i++){
+        const leaf = new THREE.Mesh(
+          new THREE.SphereGeometry(.28,12,8),
+          leafMat
+        );
+        leaf.scale.set(.55,1.35,.25);
+        leaf.position.set(
+          Math.sin(i*2.4)*.22,
+          .62 + (i%3)*.15,
+          Math.cos(i*2.4)*.22
+        );
+        leaf.rotation.z = (i-3)*.25;
+        leaf.castShadow=true;
+        g.add(leaf);
+      }
+
+      g.position.set(x,0,z);
+      g.scale.setScalar(scale);
+      lobby.add(g);
+    }
+
+    makePlant(-4.5,-2.9,1.3);
+    makePlant(4.5,-2.9,1.3);
+
+    // Ceiling lights
+    const ceilingLight = new THREE.DirectionalLight(0xfff4d6, 3.2);
+    ceilingLight.position.set(0,7,2);
+    ceilingLight.castShadow = true;
+    ceilingLight.shadow.mapSize.set(2048,2048);
+    ceilingLight.shadow.camera.left=-7;
+    ceilingLight.shadow.camera.right=7;
+    ceilingLight.shadow.camera.top=7;
+    ceilingLight.shadow.camera.bottom=-7;
+    lobby.add(ceilingLight);
+
+    const fill = new THREE.HemisphereLight(0xdde8c8,0x3d3024,2.0);
+    lobby.add(fill);
+
+    // ------------------------------------------------------------
+    // GLB character
+    // ------------------------------------------------------------
+    const modelRoot = new THREE.Group();
+    modelRoot.position.y = .3;
+    scene.add(modelRoot);
+
+    const loader = new GLTFLoader();
+
+    loader.load(
+      MODEL_URL,
+      (gltf) => {
+        const model = gltf.scene;
+
+        // Normalize model size automatically.
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+
+        const maxDim = Math.max(size.x,size.y,size.z);
+        const targetHeight = 3.15;
+        const scale = targetHeight / maxDim;
+
+        model.scale.setScalar(scale);
+        model.position.sub(center.multiplyScalar(scale));
+        model.position.y += (size.y * scale) / 2;
+
+        model.traverse((obj) => {
+          if(obj.isMesh){
+            obj.castShadow = true;
+            obj.receiveShadow = true;
+
+            // Preserve PBR material from the GLB.
+            if(obj.material){
+              obj.material.envMapIntensity = 1.25;
+              obj.material.needsUpdate = true;
+            }
+          }
+        });
+
+        modelRoot.add(model);
+        loading.classList.add("hide");
+      },
+      (xhr) => {
+        if(xhr.total){
+          const percent = Math.round(xhr.loaded / xhr.total * 100);
+          document.querySelector("#loading p").textContent =
+            `Loading 3D model... ${percent}%`;
+        }
+      },
+      (error) => {
+        console.warn("character.glb could not be loaded.", error);
+        document.querySelector("#loading p").textContent =
+          "Add character.glb beside index.html";
+        setTimeout(() => loading.classList.add("hide"), 1300);
+      }
+    );
+
+    // ------------------------------------------------------------
+    // Camera controls
+    // ------------------------------------------------------------
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = .065;
+    controls.enablePan = false;
+    controls.minDistance = 3.8;
+    controls.maxDistance = 8.5;
+    controls.minPolarAngle = Math.PI * .30;
+    controls.maxPolarAngle = Math.PI * .66;
+    controls.target.set(0,1.65,0);
+
+    // ------------------------------------------------------------
+    // Mouse cursor
+    // ------------------------------------------------------------
+    let mouseX = innerWidth/2;
+    let mouseY = innerHeight/2;
+
+    addEventListener("pointermove",(e)=>{
+      mouseX=e.clientX;
+      mouseY=e.clientY;
+      cursor.style.left=mouseX+"px";
+      cursor.style.top=mouseY+"px";
+    });
+
+    renderer.domElement.addEventListener("pointerdown",(e)=>{
+      feedEffect(e.clientX,e.clientY);
+      makeFoodParticles(e.clientX,e.clientY);
+    });
+
+    function feedEffect(x,y){
+      const el=document.createElement("div");
+      el.className="feed";
+      el.style.left=x+"px";
+      el.style.top=y+"px";
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(),850);
+    }
+
+    // ------------------------------------------------------------
+    // 3D food particles: click = feed
+    // ------------------------------------------------------------
+    const foods=[];
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    function makeFoodParticles(sx,sy){
+      pointer.x=(sx/innerWidth)*2-1;
+      pointer.y=-(sy/innerHeight)*2+1;
+      raycaster.setFromCamera(pointer,camera);
+
+      const point = raycaster.ray.origin.clone()
+        .add(raycaster.ray.direction.clone().multiplyScalar(5.2));
+
+      for(let i=0;i<7;i++){
+        const food = new THREE.Mesh(
+          new THREE.DodecahedronGeometry(.045,0),
+          new THREE.MeshStandardMaterial({
+            color:0xd6a84f,
+            roughness:.8
+          })
+        );
+        food.position.set(
+          point.x + (Math.random()-.5)*.5,
+          Math.max(.7,point.y) + (Math.random()-.5)*.35,
+          point.z + (Math.random()-.5)*.5
+        );
+        food.userData.v = new THREE.Vector3(
+          (Math.random()-.5)*.015,
+          .018 + Math.random()*.025,
+          (Math.random()-.5)*.015
+        );
+        food.userData.life=1;
+        scene.add(food);
+        foods.push(food);
+      }
+    }
+
+    // Hover cursor
+    renderer.domElement.addEventListener("pointermove",(e)=>{
+      pointer.x=(e.clientX/innerWidth)*2-1;
+      pointer.y=-(e.clientY/innerHeight)*2+1;
+      raycaster.setFromCamera(pointer,camera);
+      const hit=raycaster.intersectObjects(modelRoot.children,true);
+      document.body.classList.toggle("pointer",hit.length>0);
+    });
+
+    // ------------------------------------------------------------
+    // Subtle model breathing / lobby ambience
+    // ------------------------------------------------------------
+    const clock=new THREE.Clock();
+
+    function animate(){
+      requestAnimationFrame(animate);
+      const t=clock.getElapsedTime();
+
+      controls.update();
+
+      // Very subtle presentation motion.
+      modelRoot.position.y=.3 + Math.sin(t*1.4)*.012;
+      modelRoot.rotation.y += 0.00035;
+
+      for(let i=foods.length-1;i>=0;i--){
+        const f=foods[i];
+        f.position.add(f.userData.v);
+        f.userData.v.y -= .0007;
+        f.rotation.x += .05;
+        f.rotation.z += .04;
+        f.userData.life -= .014;
+        f.scale.setScalar(Math.max(.01,f.userData.life));
+        if(f.userData.life<=0){
+          scene.remove(f);
+          f.geometry.dispose();
+          f.material.dispose();
+          foods.splice(i,1);
+        }
+      }
+
+      renderer.render(scene,camera);
+    }
+
+    animate();
+
+    addEventListener("resize",()=>{
+      camera.aspect=innerWidth/innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth,innerHeight);
+      renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+    });
+  </script>
+</body>
+</html>
