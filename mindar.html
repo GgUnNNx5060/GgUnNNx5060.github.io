@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>MindAR</title>
+  <title>MindAR - Multi Image Target</title>
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.4/dist/aframe-extras.min.js"></script>
@@ -11,22 +11,35 @@
 
 <body style="margin:0; overflow:hidden;">
 <a-scene
-  mindar-image="imageTargetSrc: https://ggunnnx5060.github.io/targets.mind;"
+  mindar-image="imageTargetSrc: https://ggunnnx5060.github.io/targets.mind; maxTrack: 3;"
   color-space="sRGB"
   renderer="colorManagement: true, physicallyCorrectLights"
   vr-mode-ui="enabled: false"
   device-orientation-permission-ui="enabled: false">
 
   <a-assets>
+    <!-- TODO: replace model1 / model2 with the real .glb files once uploaded -->
     <a-asset-item id="model0" src="https://ggunnnx5060.github.io/chito__anime_character.glb"></a-asset-item>
+    <a-asset-item id="model1" src="https://ggunnnx5060.github.io/chito__anime_character.glb"></a-asset-item>
+    <a-asset-item id="model2" src="https://ggunnnx5060.github.io/chito__anime_character.glb"></a-asset-item>
   </a-assets>
 
   <a-light type="ambient" intensity="1.2"></a-light>
   <a-light type="directional" intensity="0.8" position="1 2 1"></a-light>
 
-  <!-- Target 1 -->
+  <!-- Target 0 : discus fish -->
   <a-entity mindar-image-target="targetIndex: 0">
-    <a-gltf-model src="#model0" animation-mixer rotation="90 0 0" scale="2 2 2"></a-gltf-model>
+    <a-gltf-model src="#model0" animation-mixer rotation="90 0 0" scale="2 2 2" position="0 0 0"></a-gltf-model>
+  </a-entity>
+
+  <!-- Target 1 : duck toast -->
+  <a-entity mindar-image-target="targetIndex: 1">
+    <a-gltf-model src="#model1" animation-mixer rotation="90 0 0" scale="2 2 2" position="0 0 0"></a-gltf-model>
+  </a-entity>
+
+  <!-- Target 2 : character -->
+  <a-entity mindar-image-target="targetIndex: 2">
+    <a-gltf-model src="#model2" animation-mixer rotation="90 0 0" scale="2 2 2" position="0 0 0"></a-gltf-model>
   </a-entity>
 
   <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
