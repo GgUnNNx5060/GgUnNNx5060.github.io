@@ -7,6 +7,28 @@
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.4/dist/aframe-extras.min.js"></script>
+  <script>
+    // ปรับขนาดโมเดลแมวอัตโนมัติให้พอดี marker + เล่นอนิเมชันเดิน
+    AFRAME.registerComponent('cat-fit', {
+      init: function () {
+        this.el.addEventListener('model-loaded', (e) => {
+          const model = e.detail.model, THREE = AFRAME.THREE;
+          const box = new THREE.Box3().setFromObject(model);
+          const size = box.getSize(new THREE.Vector3());
+          const maxd = Math.max(size.x, size.y, size.z) || 1;
+          this.el.object3D.scale.setScalar(0.8 / maxd);
+          if (model.animations && model.animations.length) {
+            this.mixer = new THREE.AnimationMixer(model);
+            const clip = model.animations.find(a => /\|Walk$/.test(a.name))
+                      || model.animations.find(a => /\|Idle$/.test(a.name))
+                      || model.animations[0];
+            this.mixer.clipAction(clip).play();
+          }
+        });
+      },
+      tick: function (t, dt) { if (this.mixer) this.mixer.update(dt / 1000); }
+    });
+  </script>
 </head>
 
 <body style="margin:0; overflow:hidden;">
@@ -20,25 +42,25 @@
   <a-assets>
     <a-asset-item id="model0" src="https://ggunnnx5060.github.io/chito__anime_character.glb"></a-asset-item>
     <a-asset-item id="model1" src="https://kipop488.github.io/cat_rigged_animation_run.glb"></a-asset-item>
-    <a-asset-item id="model2" src="https://ggunnnx5060.github.io/chito__anime_character.glb"></a-asset-item>
+    <a-asset-item id="model2" src="https://ggunnnx5060.github.io/cat_business.glb"></a-asset-item>
   </a-assets>
 
   <a-light type="ambient" intensity="1.2"></a-light>
   <a-light type="directional" intensity="0.8" position="1 2 1"></a-light>
 
-  <!-- Target 0 : discus fish -->
+  <!-- Target 0 : discus fish -> chito -->
   <a-entity mindar-image-target="targetIndex: 0">
     <a-gltf-model src="#model0" animation-mixer rotation="90 0 0" scale="0.5 0.5 0.5" position="0 0 0"></a-gltf-model>
   </a-entity>
 
-  <!-- Target 1 : duck toast -->
+  <!-- Target 1 : duck toast -> cat (kipop488) -->
   <a-entity mindar-image-target="targetIndex: 1">
     <a-gltf-model src="#model1" animation-mixer rotation="90 0 0" scale="2 2 2" position="0 0 0"></a-gltf-model>
   </a-entity>
 
-  <!-- Target 2 : character -->
+  <!-- Target 2 : business cat -> Quaternius cat (CC0) -->
   <a-entity mindar-image-target="targetIndex: 2">
-    <a-gltf-model src="#model2" animation-mixer rotation="90 0 0" scale="0.5 0.5 0.5" position="0 0 0"></a-gltf-model>
+    <a-gltf-model src="#model2" cat-fit rotation="90 0 0" position="0 0 0"></a-gltf-model>
   </a-entity>
 
   <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
